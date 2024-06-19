@@ -1,0 +1,56 @@
+# steps:
+#   # Build and tag using commit sha
+#   - name: "gcr.io/kaniko-project/executor"
+#     args: ["--context","/workspace","--destination","europe-west1-docker.pkg.dev/$PROJECT_ID/clouddeploy/flaskapp:$COMMIT_SHA","--destination","europe-west1-docker.pkg.dev/$PROJECT_ID/clouddeploy/flaskapp:latest" ,"--dockerfile","/workspace/Dockerfile", "--cache"]
+
+#   # Run api tests
+#    - name: 'europe-west1-docker.pkg.dev/$PROJECT_ID/clouddeploy/flaskapp:${COMMIT_SHA}'
+#      entrypoint: python
+#      args: ["-m", "unittest"]
+
+#   # Create release in Google Cloud Deploy
+#   - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+#     entrypoint: gcloud
+#     args: 
+#       [
+#         "deploy", "releases", "create", "rel-${SHORT_SHA}",
+#         "--delivery-pipeline", "sre",
+#         "--region", "europe-west1",
+#         "--annotations", "commitId=${REVISION_ID}",
+#         "--images", "cloud-deploy=europe-west1-docker.pkg.dev/$PROJECT_ID/clouddeploy/flaskapp:$COMMIT_SHA",
+#         "--skaffold-file=skaffold.yml"
+#       ]
+logsBucket: ""
+steps:
+  # Build and tag using commit sha
+  - name: "gcr.io/kaniko-project/executor"
+    args: ["--context","/workspace","--destination","europe-west1-docker.pkg.dev/$PROJECT_ID/clouddeploy/flaskapp:$COMMIT_SHA","--destination","europe-west1-docker.pkg.dev/$PROJECT_ID/clouddeploy/flaskapp:latest" ,"--dockerfile","/workspace/Dockerfile", "--cache"]
+
+  # Run api tests
+  #- name: 'europe-west1-docker.pkg.dev/$PROJECT_ID/clouddeploy/flaskapp:${COMMIT_SHA}'
+  #  entrypoint: python
+  #  args: ["-m", "unittest"]
+
+  # Create pipeline in Google Cloud Deploy
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args: 
+      [
+        "beta", "deploy", "apply",
+        "--file", "clouddeploy.yml",
+        "--region", "europe-west1"
+      ]
+
+  # Create release in Google Cloud Deploy
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args: 
+      [
+        "beta", "deploy", "releases", "create", "rel-${SHORT_SHA}",
+        "--delivery-pipeline", "sre",
+        "--region", "europe-west1",
+        "--annotations", "commitId=${REVISION_ID}",
+        "--images", "cloud-deploy=europe-west1-docker.pkg.dev/$PROJECT_ID/clouddeploy/flaskapp:$COMMIT_SHA"
+      ]
+options:
+  logging: CLOUD_LOGGING_ONLY
