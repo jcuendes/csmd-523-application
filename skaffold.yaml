@@ -8,6 +8,12 @@ deploy:
     paths: 
       - k8s/overlays/develop
 profiles:
+- name: develop
+    deploy:
+      kustomize:
+        defaultNamespace: develop
+        paths: 
+          - k8s/overlays/develop
   - name: staging
     deploy:
       kustomize:
