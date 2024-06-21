@@ -6,8 +6,6 @@ description: Simple application delivery pipeline
 serialPipeline:
  stages:
  - targetId: develop
-   profiles:
-   - develop
  - targetId: staging
    profiles:
    - staging
